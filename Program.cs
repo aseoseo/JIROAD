@@ -17,6 +17,13 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ИСПРАВЛЕНО: Безопасное дополнение конфигурации БЕЗ затирания системных переменных Railway
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables(); // <-- ГАРАНТИРУЕТ, ЧТО КЛЮЧИ ИЗ RAILWAY ПЕРЕКРОЮТ 127.0.0.1
+
 // Add services to the container.
 builder.Services.AddHttpClient<AiService>();
 builder.Services.AddRazorComponents()
@@ -1136,14 +1143,18 @@ roadmap.MapGet("/tests/{testId:int}", async (int testId, ClaimsPrincipal princip
         .Include(t => t.Questions)
         .ThenInclude(q => q.Options)
         .FirstOrDefaultAsync(x => x.Id == testId);
+
     if (test is null) return Results.NotFound();
+
     var response = new TestResponse(
         test.Id, test.RoadmapId, test.Title, test.Description, test.IsAiGenerated,
         test.Questions.Select(q => new QuestionResponse(
-            q.Id, q.QuestionText,
+            q.Id, 
+            q.QuestionText,
             q.Options.Select(o => new OptionResponse(o.Id, o.OptionText, o.IsCorrect)).ToList()
         )).ToList()
     );
+
     return Results.Ok(response);
 });
 
