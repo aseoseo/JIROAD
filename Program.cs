@@ -17,13 +17,12 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ОЧИЩАЕМ И ПЕРЕЗАПИСЫВАЕМ КОНФИГУРАЦИЮ НАПРЯМУЮ В BUILDER (Для корректного маппинга в AddDbContext)
-builder.Configuration.Sources.Clear();
+// КОРРЕКТНАЯ НАСТРОЙКА: Дополняем конфигурацию без полной очистки системных источников Railway
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables(); // Читает переменные из панели Railway
+    .AddEnvironmentVariables(); // Читает переменные из облака (ConnectionStrings__DefaultConnection)
 
 // Add services to the container.
 builder.Services.AddHttpClient<AiService>();
@@ -32,10 +31,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
-// ТЕПЕРЬ СТРОКА ПОДКЛЮЧЕНИЯ ГАРАНТИРОВАННО ПОДТЯНЕТ ССЫЛКУ ИЗ RAILWAY
+// СКОРРЕКТИРОВАНО: Инициализация контекста
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 
