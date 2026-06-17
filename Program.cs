@@ -17,12 +17,13 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ИСПРАВЛЕНО: Безопасное дополнение конфигурации БЕЗ затирания системных переменных Railway
+// ОЧИЩАЕМ И ПЕРЕЗАПИСЫВАЕМ КОНФИГУРАЦИЮ НАПРЯМУЮ В BUILDER (Для корректного маппинга в AddDbContext)
+builder.Configuration.Sources.Clear();
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-    .AddEnvironmentVariables(); // <-- ГАРАНТИРУЕТ, ЧТО КЛЮЧИ ИЗ RAILWAY ПЕРЕКРОЮТ 127.0.0.1
+    .AddEnvironmentVariables(); // Читает переменные из панели Railway
 
 // Add services to the container.
 builder.Services.AddHttpClient<AiService>();
@@ -31,7 +32,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
-// СКОРРЕКТИРОВАНО: Перевод контекста EF Core на провайдер PostgreSQL
+// ТЕПЕРЬ СТРОКА ПОДКЛЮЧЕНИЯ ГАРАНТИРОВАННО ПОДТЯНЕТ ССЫЛКУ ИЗ RAILWAY
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
