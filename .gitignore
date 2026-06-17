@@ -1,0 +1,14 @@
+# Сборка .NET
+bin/
+obj/
+
+# Секреты и локальные настройки
+appsettings.Development.json
+*.user
+
+# Локальный кэш JetBrains Rider
+.idea/
+
+# Временные файлы проекта
+test.txt
+test_shell.txt
